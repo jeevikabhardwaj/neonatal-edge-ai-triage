@@ -369,15 +369,22 @@ def run_training(
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             checkpoint = {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "train_loss": train_loss,
-"train_accuracy": train_acc,
-                "validation_loss": val_loss,
-                "validation_accuracy": val_acc,
-                "classes": classes,
-            }
+    "epoch": epoch,
+
+    "model_state_dict": model.state_dict(),
+
+    "optimizer_state_dict": optimizer.state_dict(),
+
+    "train_loss": train_loss,
+    "train_accuracy": train_acc,
+
+    "validation_loss": val_loss,
+    "validation_accuracy": val_acc,
+
+    "history": history,
+
+    "classes": classes
+}
             save_checkpoint(checkpoint, checkpoint_path)
             print(f"[CHECKPOINT] Validation loss improved to {val_loss:.4f}. Checkpoint saved.")
 

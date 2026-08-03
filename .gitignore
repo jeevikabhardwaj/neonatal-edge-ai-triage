@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Trained model checkpoints
+models/
+*.pth
+
+# Evaluation artifacts
+*.png
+
+# Python cache
+__pycache__/
