@@ -26,6 +26,14 @@ training:
   use_class_weights: true
 
 checkpoint:
-  directory: "models"
-  filename: "best_baseline_model.pth"
-  history_csv: "training_history.csv"
+  checkpoint_dir: "models/checkpoints"
+  checkpoint_name: "best_baseline_model.pth"
+
+history:
+  csv_path: "models/history/training_history.csv"
+
+figures:
+  directory: "models/figures"
+
+reports:
+  directory: "models/reports"
