@@ -45,7 +45,7 @@ IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
 def load_model(
-    checkpoint_path: Union[Path, str] = "models/best_baseline_model.pth",
+    checkpoint_path: Union[Path, str] = "models/checkpoints/best_baseline_model.pth",
     device: Optional[torch.device] = None,
 ) -> Tuple[torch.nn.Module, List[str], str, torch.device]:
     """
@@ -57,15 +57,22 @@ def load_model(
         device: Target compute device (if None, auto-detected).
 
     Returns:
-        Tuple[torch.nn.Module, List[str], torch.device]:
+        Tuple[torch.nn.Module, List[str], str, torch.device]:
             - Loaded PyTorch model in eval mode
             - List of class names
+            - Model version string
             - Active compute device
 
     Raises:
         FileNotFoundError: If checkpoint file does not exist.
     """
     resolved_path = (PROJECT_ROOT / checkpoint_path).resolve() if not Path(checkpoint_path).is_absolute() else Path(checkpoint_path)
+
+    # Fallback check to legacy path if default path does not exist
+    if not resolved_path.exists() or not resolved_path.is_file():
+        legacy_path = (PROJECT_ROOT / "models" / "best_baseline_model.pth").resolve()
+        if legacy_path.exists() and legacy_path.is_file():
+            resolved_path = legacy_path
 
     if not resolved_path.exists() or not resolved_path.is_file():
         raise FileNotFoundError(
@@ -79,18 +86,18 @@ def load_model(
 
     checkpoint: Dict[str, Any] = torch.load(
         str(resolved_path),
-        map_location="cpu"
+        map_location="cpu",
     )
 
     # Extract class names and model metadata
     class_names: List[str] = checkpoint.get(
         "classes",
-        ["high_risk", "moderate_risk", "normal"]
+        ["high_risk", "moderate_risk", "normal"],
     )
 
     model_version: str = checkpoint.get(
         "model_version",
-        MODEL_VERSION
+        MODEL_VERSION,
     )
 
     num_classes = len(class_names)
@@ -197,10 +204,10 @@ def get_recommendation(predicted_class: str, confidence: float) -> str:
     )
 
     if confidence < 0.60:
-     base_recommendation += (
-        " Prediction confidence is low. "
-        "Interpret the result alongside clinical assessment."
-    )
+        base_recommendation += (
+            " Prediction confidence is low. "
+            "Interpret the result alongside clinical assessment."
+        )
     return base_recommendation
 
 
@@ -210,7 +217,7 @@ def predict_single_sample(
     model: Optional[torch.nn.Module] = None,
     class_names: Optional[List[str]] = None,
     device: Optional[torch.device] = None,
-    checkpoint_path: Union[Path, str] = "models/best_baseline_model.pth",
+    checkpoint_path: Union[Path, str] = "models/checkpoints/best_baseline_model.pth",
 ) -> Dict[str, Any]:
     """
     Central inference engine API for single-sample lung ultrasound triage.
@@ -239,7 +246,12 @@ def predict_single_sample(
     """
     # 1. Model resolution
     if model is None or class_names is None or device is None:
-        model, class_names, model_version, device = load_model(checkpoint_path=checkpoint_path, device=device)
+        model, class_names, model_version, device = load_model(
+            checkpoint_path=checkpoint_path,
+            device=device,
+        )
+    else:
+        model_version = MODEL_VERSION
 
     # 2. Preprocessing
     input_tensor = preprocess_image(image=image)
@@ -309,6 +321,8 @@ def print_prediction_summary(result: Dict[str, Any]) -> None:
     print(f"Prediction Timestamp      : {result['prediction_timestamp']}")
     print(f"Model Version             : {result['model_version']}")
     print("=" * 60)
+
+
 def locate_sample_image() -> Path:
     """
     Locates the first available sample image from the raw dataset search paths:

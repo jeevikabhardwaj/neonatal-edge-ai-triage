@@ -6,7 +6,7 @@ This module implements a standalone, reproducible evaluation pipeline for the
 trained MobileNetV3-Small lung ultrasound triage model. It loads the best checkpoint,
 reconstructs the exact validation split, computes comprehensive classification metrics
 (accuracy, precision, recall, F1, confusion matrix), and generates visualization artifacts
-(training curves, confusion matrix plot, evaluation text report).
+(training curves, confusion matrix plot, evaluation text report) into organized directories.
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ except ImportError:
 
 
 def load_checkpoint(
-    checkpoint_path: Union[Path, str] = "models/best_baseline_model.pth",
+    checkpoint_path: Union[Path, str] = "models/checkpoints/best_baseline_model.pth",
 ) -> Dict[str, Any]:
     """
     Loads the saved model checkpoint from disk and returns its contents.
@@ -65,6 +65,12 @@ def load_checkpoint(
         FileNotFoundError: If the checkpoint file does not exist at the specified path.
     """
     resolved_path = (PROJECT_ROOT / checkpoint_path).resolve() if not Path(checkpoint_path).is_absolute() else Path(checkpoint_path)
+
+    # Fallback check to legacy path if default path does not exist
+    if not resolved_path.exists() or not resolved_path.is_file():
+        legacy_path = (PROJECT_ROOT / "models" / "best_baseline_model.pth").resolve()
+        if legacy_path.exists() and legacy_path.is_file():
+            resolved_path = legacy_path
 
     if not resolved_path.exists() or not resolved_path.is_file():
         raise FileNotFoundError(
@@ -236,7 +242,7 @@ def compute_metrics(
 
 def plot_training_curves(
     history: Dict[str, List[float]],
-    output_path: Union[Path, str] = "models/training_curves.png",
+    output_path: Union[Path, str] = "models/figures/training_curves.png",
 ) -> Path:
     """
     Generates a two-panel visualization of training & validation loss and accuracy curves.
@@ -291,7 +297,7 @@ def plot_training_curves(
 def plot_confusion_matrix(
     cm: np.ndarray,
     class_names: List[str],
-    output_path: Union[Path, str] = "models/confusion_matrix.png",
+    output_path: Union[Path, str] = "models/figures/confusion_matrix.png",
 ) -> Path:
     """
     Plots and saves a high-contrast confusion matrix using pure matplotlib.
@@ -342,7 +348,7 @@ def plot_confusion_matrix(
 def save_evaluation_report(
     checkpoint: Dict[str, Any],
     metrics: Dict[str, Any],
-    output_path: Union[Path, str] = "models/evaluation_report.txt",
+    output_path: Union[Path, str] = "models/reports/evaluation_report.txt",
 ) -> Path:
     """
     Generates a structured, human-readable evaluation summary report text file.
@@ -385,7 +391,7 @@ Milestone 4: Baseline Image Classifier Evaluation Report
 ================================================================================
 
 Timestamp               : {timestamp}
-Evaluated Checkpoint    : models/best_baseline_model.pth
+Evaluated Checkpoint    : models/checkpoints/best_baseline_model.pth
 Checkpoint Saved Epoch  : {epoch}
 
 --------------------------------------------------------------------------------
@@ -419,10 +425,10 @@ Confusion Matrix
 
 
 def run_evaluation(
-    checkpoint_path: Union[Path, str] = "models/best_baseline_model.pth",
-    report_path: Union[Path, str] = "models/evaluation_report.txt",
-    curves_path: Union[Path, str] = "models/training_curves.png",
-    cm_path: Union[Path, str] = "models/confusion_matrix.png",
+    checkpoint_path: Union[Path, str] = "models/checkpoints/best_baseline_model.pth",
+    report_path: Union[Path, str] = "models/reports/evaluation_report.txt",
+    curves_path: Union[Path, str] = "models/figures/training_curves.png",
+    cm_path: Union[Path, str] = "models/figures/confusion_matrix.png",
 ) -> Dict[str, Any]:
     """
     Coordinates the full evaluation lifecycle:
@@ -443,7 +449,8 @@ def run_evaluation(
     print(f"[INFO] Compute Device: {device}")
 
     checkpoint = load_checkpoint(checkpoint_path)
-    print(f"[INFO] Loaded Checkpoint from: {checkpoint_path}")
+    rel_ckpt_str = str(Path(checkpoint_path).relative_to(PROJECT_ROOT)) if Path(checkpoint_path).is_absolute() and Path(checkpoint_path).is_relative_to(PROJECT_ROOT) else str(checkpoint_path)
+    print(f"[INFO] Loaded Checkpoint from: {rel_ckpt_str}")
     print(f"[INFO] Checkpoint Epoch: {checkpoint.get('epoch', 'N/A')}")
     print(f"[INFO] Checkpoint Recorded Val Loss: {checkpoint.get('validation_loss', 'N/A'):.4f}")
 
@@ -482,10 +489,9 @@ def main() -> None:
     run_evaluation()
 
     print("\nEvaluation completed successfully.\n")
-    print("Saved:")
-    print("training_curves.png")
-    print("confusion_matrix.png")
-    print("evaluation_report.txt")
+    print("Training curves:\nmodels/figures/training_curves.png")
+    print("\nConfusion matrix:\nmodels/figures/confusion_matrix.png")
+    print("\nEvaluation report:\nmodels/reports/evaluation_report.txt")
 
 
 if __name__ == "__main__":

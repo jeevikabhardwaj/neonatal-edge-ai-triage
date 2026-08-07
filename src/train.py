@@ -398,7 +398,7 @@ def run_training(
     4. Configures optional class weighting and weighted random sampling.
     5. Initializes MobileNetV3-Small with specified backbone freeze state.
     6. Executes training loop with ReduceLROnPlateau and early stopping.
-    7. Saves best model checkpoint and exports training_history.csv.
+    7. Saves best model checkpoint in models/checkpoints/ and exports history CSV in models/history/.
 
     Args:
         config: Optional configuration dictionary.
@@ -423,6 +423,7 @@ def run_training(
     model_cfg = config.get("model", {})
     train_cfg = config.get("training", {})
     ckpt_cfg = config.get("checkpoint", {})
+    history_cfg = config.get("history", {})
 
     effective_seed = seed if seed is not None else config.get("seed", 42)
     effective_epochs = epochs if epochs is not None else train_cfg.get("epochs", 5)
@@ -436,12 +437,16 @@ def run_training(
         num_workers if num_workers is not None else data_cfg.get("num_workers", 0)
     )
     effective_ckpt_dir = (
-        checkpoint_dir if checkpoint_dir is not None else ckpt_cfg.get("directory", "models")
+        checkpoint_dir
+        if checkpoint_dir is not None
+        else ckpt_cfg.get("checkpoint_dir", ckpt_cfg.get("directory", "models/checkpoints"))
     )
     effective_ckpt_name = (
-        checkpoint_name if checkpoint_name is not None else ckpt_cfg.get("filename", "best_baseline_model.pth")
+        checkpoint_name
+        if checkpoint_name is not None
+        else ckpt_cfg.get("checkpoint_name", ckpt_cfg.get("filename", "best_baseline_model.pth"))
     )
-    history_csv_name = ckpt_cfg.get("history_csv", "training_history.csv")
+    history_csv_cfg = history_cfg.get("csv_path", ckpt_cfg.get("history_csv", "models/history/training_history.csv"))
 
     weight_decay = train_cfg.get("weight_decay", 0.01)
     scheduler_patience = train_cfg.get("scheduler_patience", 2)
@@ -514,8 +519,9 @@ def run_training(
 
     # 8. Checkpoint & History Paths
     checkpoint_path = (PROJECT_ROOT / effective_ckpt_dir / effective_ckpt_name).resolve()
-    history_csv_path = (PROJECT_ROOT / effective_ckpt_dir / history_csv_name).resolve()
+    history_csv_path = (PROJECT_ROOT / history_csv_cfg).resolve()
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    history_csv_path.parent.mkdir(parents=True, exist_ok=True)
 
     # 9. Header Summary Output
     print("=" * 60)
@@ -613,6 +619,7 @@ def run_training(
                 "configuration": config,
             }
             save_checkpoint(checkpoint, checkpoint_path)
+            rel_ckpt_str = str(checkpoint_path.relative_to(PROJECT_ROOT)) if checkpoint_path.is_relative_to(PROJECT_ROOT) else str(checkpoint_path)
             print(f"[CHECKPOINT] Validation loss improved to {val_loss:.4f}. Checkpoint saved.")
         else:
             epochs_without_improvement += 1
@@ -632,6 +639,9 @@ def run_training(
 
     # 12. Final Console Summary
     duration = time.time() - start_time
+    rel_ckpt_path = str(checkpoint_path.relative_to(PROJECT_ROOT)) if checkpoint_path.is_relative_to(PROJECT_ROOT) else str(checkpoint_path)
+    rel_csv_path = str(history_csv_path.relative_to(PROJECT_ROOT)) if history_csv_path.is_relative_to(PROJECT_ROOT) else str(history_csv_path)
+
     print("=" * 60)
     print("Training Summary")
     print("=" * 60)
@@ -646,8 +656,8 @@ def run_training(
     print(f"Early Stopping Status  : {'Triggered' if early_stopped else 'Did not trigger'}")
     print(f"Training Duration      : {duration:.2f}s ({duration / 60:.2f} min)")
     print(f"Final Best Val Loss    : {best_val_loss:.4f}")
-    print(f"Checkpoint Location    : {checkpoint_path}")
-    print(f"History CSV Location   : {history_csv_path}")
+    print(f"Checkpoint saved:\n{rel_ckpt_path}")
+    print(f"Training history:\n{rel_csv_path}")
     print("=" * 60)
 
     return history
