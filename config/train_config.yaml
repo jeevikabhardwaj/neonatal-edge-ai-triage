@@ -1,0 +1,31 @@
+seed: 42
+
+data:
+  raw_dir: "data/raw"
+  batch_size: 4
+  validation_split: 0.2
+  shuffle: true
+  num_workers: 0
+  pin_memory: false
+  use_weighted_sampler: false
+
+model:
+  freeze_backbone: true
+  num_classes: 3
+
+training:
+  epochs: 5
+  optimizer: "AdamW"
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  scheduler: "ReduceLROnPlateau"
+  scheduler_patience: 2
+  scheduler_factor: 0.5
+  early_stopping: true
+  early_stopping_patience: 5
+  use_class_weights: true
+
+checkpoint:
+  directory: "models"
+  filename: "best_baseline_model.pth"
+  history_csv: "training_history.csv"
