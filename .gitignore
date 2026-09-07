@@ -223,5 +223,11 @@ models/
 # Evaluation artifacts
 *.png
 
-# Python cache
-__pycache__/
+# Medical datasets
+data/raw/OpenPOCUS/
+data/processed/
+data/external/
+
+# Large archives
+*.zip
+*.tar.gz
