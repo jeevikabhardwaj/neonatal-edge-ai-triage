@@ -46,6 +46,7 @@ TEST_MANIFEST = (
     PROJECT_ROOT
     / "data"
     / "splits"
+    / "minor"
     / "minor_frame_manifest_clean.csv"
 )
 
