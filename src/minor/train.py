@@ -26,11 +26,26 @@ from model import create_model
 
 PROJECT_ROOT = Path.cwd()
 
-MANIFEST = (
+TRAIN_MANIFEST = (
     PROJECT_ROOT
     / "data"
     / "splits"
     / "minor"
+    / "minor_train_manifest_240.csv"
+)
+
+VAL_MANIFEST = (
+    PROJECT_ROOT
+    / "data"
+    / "splits"
+    / "minor"
+    / "minor_validation_manifest_240.csv"
+)
+
+TEST_MANIFEST = (
+    PROJECT_ROOT
+    / "data"
+    / "splits"
     / "minor_frame_manifest_clean.csv"
 )
 
@@ -115,21 +130,21 @@ print("\nDevice:", DEVICE)
 print("\nLoading datasets...")
 
 train_dataset = OpenPOCUSMinorDataset(
-    MANIFEST,
+    TRAIN_MANIFEST,
     split="train",
     image_size=IMAGE_SIZE,
     train=True,
 )
 
 val_dataset = OpenPOCUSMinorDataset(
-    MANIFEST,
+    VAL_MANIFEST,
     split="validation",
     image_size=IMAGE_SIZE,
     train=False,
 )
 
 test_dataset = OpenPOCUSMinorDataset(
-    MANIFEST,
+    TEST_MANIFEST,
     split="test",
     image_size=IMAGE_SIZE,
     train=False,
