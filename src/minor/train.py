@@ -30,7 +30,8 @@ MANIFEST = (
     PROJECT_ROOT
     / "data"
     / "splits"
-    / "minor_frame_manifest.csv"
+    / "minor"
+    / "minor_frame_manifest_clean.csv"
 )
 
 CHECKPOINT_DIR = (

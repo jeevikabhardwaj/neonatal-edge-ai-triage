@@ -253,11 +253,6 @@ class OpenPOCUSMinorDataset(Dataset):
             "frame": int(
                 row["frame"]
             ),
-            "zone_label": (
-                -1
-                if pd.isna(row["zone_label"])
-                else int(row["zone_label"])
-            ),
         }
 
     def close(self):
